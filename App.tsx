@@ -9,73 +9,93 @@ import {
   Image,
   StatusBar,
   Alert,
+  Pressable,
   Modal,
   Switch,
   Linking,
 } from 'react-native';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ULKATV_PACKAGE = 'com.ulkatech.ulkasports';
 
-const FOCUS_IDS = {
-  home: 101,
-  livetv: 102,
-  apps: 103,
-  games: 104,
-  add1: 201,
-  add2: 202,
-  quickApp1: 301,
-  quickApp2: 302,
-  quickApp3: 303,
-  quickApp4: 304,
-  settingsClose: 401,
-};
+type FocusKey =
+  | 'home'
+  | 'livetv'
+  | 'apps'
+  | 'games'
+  | 'watchNow'
+  | 'quickApp1'
+  | 'quickApp2'
+  | 'quickApp3'
+  | 'quickApp4'
+  | 'settingsClose';
 
-type FocusKey = keyof typeof FOCUS_IDS;
+const FocusBox = ({
+  id,
+  focusedMenuId,
+  setFocusedMenuId,
+  onPress,
+  children,
+  style,
+  focusedStyle,
+  boxRef,
+  hasTVPreferredFocus = false,
+}: any) => {
+  const isFocused = focusedMenuId === id;
+
+  return (
+    <Pressable
+      ref={boxRef}
+      focusable={true}
+      hasTVPreferredFocus={hasTVPreferredFocus}
+      onFocus={() => setFocusedMenuId(id)}
+      onPress={onPress}
+      style={[style, isFocused && focusedStyle]}
+    >
+      {children}
+    </Pressable>
+  );
+};
 
 const App = () => {
   const [currentTime, setCurrentTime] = useState('');
-  const [focusedMenuId, setFocusedMenuId] = useState<FocusKey | null>(null);
+  const [focusedMenuId, setFocusedMenuId] = useState<FocusKey | null>('home');
   const [showSettings, setShowSettings] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(false);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
 
-  const scrollViewRef = useRef<ScrollView>(null);
   const homeRef = useRef<any>(null);
-  const livetvRef = useRef<any>(null);
-  const appsRef = useRef<any>(null);
-  const gamesRef = useRef<any>(null);
-  const add1Ref = useRef<any>(null);
-  const add2Ref = useRef<any>(null);
-  const quickApp1Ref = useRef<any>(null);
-  const quickApp2Ref = useRef<any>(null);
-  const quickApp3Ref = useRef<any>(null);
-  const quickApp4Ref = useRef<any>(null);
-  const closeButtonRef = useRef<any>(null);
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }));
+      setCurrentTime(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        }),
+      );
     };
+
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // డిఫాల్ట్ ఫోకస్ హోమ్ బటన్ పై పెట్టు
   useEffect(() => {
-    if (!focusedMenuId) {
-      setFocusedMenuId('home');
-      setTimeout(() => {
-        homeRef.current?.focus();
-        console.log('Focus set to Home');
-      }, 100);
-    }
-  }, [focusedMenuId]);
+    setTimeout(() => {
+      homeRef.current?.focus?.();
+    }, 500);
+  }, []);
 
   const launchULKATV = async () => {
     try {
-      await Linking.openURL(`intent://#Intent;package=${ULKATV_PACKAGE};scheme=;end`);
+      await Linking.openURL(
+        `intent://#Intent;package=${ULKATV_PACKAGE};scheme=;end`,
+      );
     } catch (error) {
       Alert.alert('Error', 'Cannot open ULKATV app');
     }
@@ -98,161 +118,220 @@ const App = () => {
       case 'quickApp4':
         Alert.alert('Games', 'Games folder will open.');
         break;
-      case 'add1':
-        Alert.alert('Advertisement 1', 'Ad 1 clicked');
-        break;
-      case 'add2':
-        Alert.alert('Advertisement 2', 'Ad 2 clicked');
-        break;
       default:
         Alert.alert('Navigation', `${id} pressed`);
     }
   };
 
   const quickApps = [
-    { id: 'quickApp1', name: 'Settings', image: require('./assets/images/Settings.png'), ref: quickApp1Ref },
-    { id: 'quickApp2', name: 'Web Page', image: require('./assets/images/web-page.png'), ref: quickApp2Ref },
-    { id: 'quickApp3', name: 'YouTube', image: require('./assets/images/youtube.png'), ref: quickApp3Ref },
-    { id: 'quickApp4', name: 'Games', image: require('./assets/images/game-folder1.png'), ref: quickApp4Ref },
+    {
+      id: 'quickApp1' as FocusKey,
+      name: 'Settings',
+      iconType: 'Ionicons',
+      iconName: 'settings',
+    },
+    {
+      id: 'quickApp2' as FocusKey,
+      name: 'Web Page',
+      iconType: 'MaterialIcons',
+      iconName: 'language',
+    },
+    {
+      id: 'quickApp3' as FocusKey,
+      name: 'YouTube',
+      iconType: 'FontAwesome',
+      iconName: 'youtube-play',
+    },
+    {
+      id: 'quickApp4' as FocusKey,
+      name: 'Games',
+      iconType: 'Ionicons',
+      iconName: 'game-controller',
+    },
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={styles.root}>
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false}>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.topRow}>
             <View style={styles.leftTopRow}>
-              <Image source={require('./assets/images/Apfiber_logo.png')} style={styles.logoImage} resizeMode="contain" />
+              <Image
+                source={require('./assets/images/Apfiber_logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <Text style={styles.tempCity}>32°C Hyderabad</Text>
             </View>
+
             <View style={styles.rightTop}>
               <Text style={styles.time}>{currentTime}</Text>
             </View>
           </View>
 
           <View style={styles.twoColumn}>
-            {/* LEFT COLUMN */}
             <View style={styles.leftNav}>
-              <TouchableOpacity style={styles.searchButton} onPress={() => Alert.alert('Search', 'Search pressed')}>
-                <Image source={require('./assets/images/search-symbol.png')} style={styles.searchIcon} resizeMode="contain" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                ref={homeRef}
-                style={[styles.iconButton, focusedMenuId === 'home' && styles.focusedIconButton]}
-                onPress={() => handlePress('home')}
-                onFocus={() => setFocusedMenuId('home')}
+             <FocusBox
+                id="home"
+                boxRef={homeRef}
                 hasTVPreferredFocus={true}
-                nextFocusDown={FOCUS_IDS.livetv}
-                nextFocusRight={FOCUS_IDS.add1}
-                activeOpacity={1}
+                focusedMenuId={focusedMenuId}
+                setFocusedMenuId={setFocusedMenuId}
+                onPress={() => handlePress('home')}
+                style={styles.iconButton}
+                focusedStyle={styles.focusedIconButton}
               >
-                <Image source={require('./assets/images/home.png')} style={styles.iconImage} />
-              </TouchableOpacity>
+                <MaterialIcons
+                  name="home"
+                  size={34}
+                  color={focusedMenuId === 'home' ? '#ffffff' : '#F15A24'}
+                />
+             </FocusBox>
 
-              <TouchableOpacity
-                ref={livetvRef}
-                style={[styles.iconButton, focusedMenuId === 'livetv' && styles.focusedIconButton]}
+              <FocusBox
+                id="livetv"
+                focusedMenuId={focusedMenuId}
+                setFocusedMenuId={setFocusedMenuId}
                 onPress={() => handlePress('livetv')}
-                onFocus={() => setFocusedMenuId('livetv')}
-                nextFocusUp={FOCUS_IDS.home}
-                nextFocusDown={FOCUS_IDS.apps}
-                nextFocusRight={FOCUS_IDS.add2}
-                activeOpacity={1}
+                style={styles.iconButton}
+                focusedStyle={styles.focusedIconButton}
               >
-                <Image source={require('./assets/images/TVShow.png')} style={styles.iconImage} />
-              </TouchableOpacity>
+                <Ionicons
+                  name="tv"
+                  size={34}
+                  color={focusedMenuId === 'livetv' ? '#ffffff' : '#F15A24'}
+                />
+              </FocusBox>
 
-              <TouchableOpacity
-                ref={appsRef}
-                style={[styles.iconButton, focusedMenuId === 'apps' && styles.focusedIconButton]}
+              <FocusBox
+                id="apps"
+                focusedMenuId={focusedMenuId}
+                setFocusedMenuId={setFocusedMenuId}
                 onPress={() => handlePress('apps')}
-                onFocus={() => setFocusedMenuId('apps')}
-                nextFocusUp={FOCUS_IDS.livetv}
-                nextFocusDown={FOCUS_IDS.games}
-                nextFocusRight={FOCUS_IDS.quickApp1}
-                activeOpacity={1}
+                style={styles.iconButton}
+                focusedStyle={styles.focusedIconButton}
               >
-                <Image source={require('./assets/images/Apps.png')} style={styles.iconImage} />
-              </TouchableOpacity>
+                <MaterialIcons
+                  name="apps"
+                  size={34}
+                  color={focusedMenuId === 'apps' ? '#ffffff' : '#F15A24'}
+                />
+              </FocusBox>
 
-              <TouchableOpacity
-                ref={gamesRef}
-                style={[styles.iconButton, focusedMenuId === 'games' && styles.focusedIconButton]}
+              <FocusBox
+                id="games"
+                focusedMenuId={focusedMenuId}
+                setFocusedMenuId={setFocusedMenuId}
                 onPress={() => handlePress('games')}
-                onFocus={() => setFocusedMenuId('games')}
-                nextFocusUp={FOCUS_IDS.apps}
-                nextFocusLeft={FOCUS_IDS.quickApp4}
-                nextFocusRight={FOCUS_IDS.quickApp3}
-                activeOpacity={1}
+                style={styles.iconButton}
+                focusedStyle={styles.focusedIconButton}
               >
-                <Image source={require('./assets/images/game-folder1.png')} style={styles.iconImage} />
-              </TouchableOpacity>
+                <Ionicons
+                  name="game-controller"
+                  size={34}
+                  color={focusedMenuId === 'games' ? '#ffffff' : '#F15A24'}
+                />
+              </FocusBox>
             </View>
 
-            {/* RIGHT COLUMN */}
             <View style={styles.rightContent}>
               <View style={styles.adsRow}>
-                <TouchableOpacity
-                  ref={add1Ref}
-                  style={[styles.adItem, styles.redBorder, focusedMenuId === 'add1' && styles.focusedAd]}
-                  onPress={() => handlePress('add1')}
-                  onFocus={() => setFocusedMenuId('add1')}
-                  nextFocusUp={FOCUS_IDS.home}
-                  nextFocusDown={FOCUS_IDS.quickApp1}
-                  nextFocusLeft={FOCUS_IDS.home}
-                  nextFocusRight={FOCUS_IDS.add2}
-                  activeOpacity={1}
-                >
-                  <Image source={require('./assets/images/add1.png')} style={styles.adImage} />
-                </TouchableOpacity>
+                <View style={styles.adItem}>
+                  <Image
+                    source={require('./assets/images/add1.png')}
+                    style={styles.adImage}
+                    resizeMode="cover"
+                  />
 
-                <TouchableOpacity
-                  ref={add2Ref}
-                  style={[styles.adItem, styles.redBorder, focusedMenuId === 'add2' && styles.focusedAd]}
-                  onPress={() => handlePress('add2')}
-                  onFocus={() => setFocusedMenuId('add2')}
-                  nextFocusUp={FOCUS_IDS.livetv}
-                  nextFocusDown={FOCUS_IDS.quickApp2}
-                  nextFocusLeft={FOCUS_IDS.add1}
-                  nextFocusRight={FOCUS_IDS.quickApp3}
-                  activeOpacity={1}
-                >
-                  <Image source={require('./assets/images/add2.png')} style={styles.adImage} />
-                </TouchableOpacity>
+                  <FocusBox
+                    id="watchNow"
+                    focusedMenuId={focusedMenuId}
+                    setFocusedMenuId={setFocusedMenuId}
+                    onPress={() => handlePress('livetv')}
+                    style={styles.watchNowButton}
+                    focusedStyle={styles.focusedWatchNowButton}
+                  >
+                    <Text style={styles.watchNowText}>Watch Now</Text>
+                  </FocusBox>
+                </View>
+
+                <View style={styles.adItem}>
+                  <Image
+                    source={require('./assets/images/add2.png')}
+                    style={styles.adImage}
+                    resizeMode="cover"
+                  />
+                </View>
               </View>
 
               <View style={styles.quickAppsRow}>
-                <View style={[styles.borderedColumnRed, styles.leftColumn]}>
-                  <Image source={require('./assets/images/goverenment1.png')} style={styles.fullSizeImage} resizeMode="cover" />
+                <View style={[styles.bottomImageCard, styles.leftColumn]}>
+                  <Image
+                    source={require('./assets/images/add3.png')}
+                    style={styles.bottomImage}
+                    resizeMode="cover"
+                  />
                 </View>
 
-                <View style={[styles.borderedColumnRed, styles.middleColumn]}>
+                <View style={[styles.quickAppsCard, styles.middleColumn]}>
                   <Text style={styles.quickAppsTitle}>QUICK APPS</Text>
+
                   <View style={styles.appsRowNoBorder}>
-                    {quickApps.map((app, index) => (
-                      <TouchableOpacity
+                    {quickApps.map(app => (
+                      <FocusBox
                         key={app.id}
-                        ref={app.ref}
-                        style={[styles.appItemNoBorder, focusedMenuId === app.id && styles.focusedAppNoBorder]}
-                        onPress={() => handlePress(app.id as FocusKey)}
-                        onFocus={() => setFocusedMenuId(app.id as FocusKey)}
-                        nextFocusLeft={index === 0 ? FOCUS_IDS.add1 : index === 1 ? FOCUS_IDS.quickApp1 : index === 2 ? FOCUS_IDS.quickApp2 : index === 3 ? FOCUS_IDS.quickApp3 : undefined}
-                        nextFocusRight={index === 0 ? FOCUS_IDS.quickApp2 : index === 1 ? FOCUS_IDS.quickApp3 : index === 2 ? FOCUS_IDS.quickApp4 : index === 3 ? FOCUS_IDS.games : undefined}
-                        nextFocusUp={index === 0 ? FOCUS_IDS.add1 : index === 1 ? FOCUS_IDS.add2 : index === 2 ? FOCUS_IDS.add2 : index === 3 ? FOCUS_IDS.games : undefined}
-                        nextFocusDown={index === 3 ? FOCUS_IDS.games : undefined}
-                        activeOpacity={1}
+                        id={app.id}
+                        focusedMenuId={focusedMenuId}
+                        setFocusedMenuId={setFocusedMenuId}
+                        onPress={() => handlePress(app.id)}
+                        style={styles.appItemNoBorder}
+                        focusedStyle={styles.focusedAppNoBorder}
                       >
-                        <Image source={app.image} style={styles.appIconNoBorder} />
-                        <Text style={styles.appNameNoBorder}>{app.name}</Text>
-                      </TouchableOpacity>
+                        {app.iconType === 'Ionicons' && (
+                          <Ionicons
+                            name={app.iconName}
+                            size={42}
+                            color={focusedMenuId === app.id ? '#F15A24' : '#FF7A1A'}
+                          />
+                        )}
+
+                        {app.iconType === 'MaterialIcons' && (
+                          <MaterialIcons
+                            name={app.iconName}
+                            size={42}
+                            color={focusedMenuId === app.id ? '#F15A24' : '#2196F3'}
+                          />
+                        )}
+
+                        {app.iconType === 'FontAwesome' && (
+                          <FontAwesome
+                            name={app.iconName}
+                            size={42}
+                            color="#FF0000"
+                          />
+                        )}
+
+                        <Text
+                          style={[
+                            styles.appNameNoBorder,
+                            focusedMenuId === app.id && styles.focusedAppName,
+                          ]}
+                        >
+                          {app.name}
+                        </Text>
+                      </FocusBox>
                     ))}
                   </View>
                 </View>
 
-                <View style={[styles.borderedColumnRed, styles.rightColumn]}>
-                  <Image source={require('./assets/images/goverenment2.png')} style={styles.fullSizeImage} resizeMode="cover" />
+                <View style={[styles.bottomImageCard, styles.rightColumn]}>
+                  <Image
+                    source={require('./assets/images/add4.png')}
+                    style={styles.bottomImage}
+                    resizeMode="cover"
+                  />
                 </View>
               </View>
             </View>
@@ -260,7 +339,6 @@ const App = () => {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Settings Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -276,8 +354,6 @@ const App = () => {
               <Switch
                 value={notificationEnabled}
                 onValueChange={setNotificationEnabled}
-                trackColor={{ false: '#767577', true: '#81b0ff' }}
-                thumbColor={notificationEnabled ? '#f5dd4b' : '#f4f3f4'}
               />
             </View>
 
@@ -286,14 +362,15 @@ const App = () => {
               <Switch
                 value={autoPlayEnabled}
                 onValueChange={setAutoPlayEnabled}
-                trackColor={{ false: '#767577', true: '#81b0ff' }}
-                thumbColor={autoPlayEnabled ? '#f5dd4b' : '#f4f3f4'}
               />
             </View>
 
             <TouchableOpacity
-              ref={closeButtonRef}
-              style={[styles.closeButton, focusedMenuId === 'settingsClose' && styles.focusedCloseButton]}
+              focusable={true}
+              style={[
+                styles.closeButton,
+                focusedMenuId === 'settingsClose' && styles.focusedCloseButton,
+              ]}
               onPress={() => setShowSettings(false)}
               onFocus={() => setFocusedMenuId('settingsClose')}
               activeOpacity={1}
@@ -308,160 +385,271 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
   },
-  leftTopRow: { flexDirection: 'row', alignItems: 'center' },
-  logoImage: { width: 200, height: 60, marginLeft: 60, marginRight: 12 },
-  tempCity: { fontSize: 16, color: '#f46004', marginTop: '6%' },
-  rightTop: { justifyContent: 'center' },
-  time: { fontSize: 16, fontWeight: '600', color: '#2c3e50' },
-  twoColumn: { flexDirection: 'row', padding: 12, flex: 1 },
-  leftNav: { width: 'auto', marginRight: 8, alignItems: 'center' },
-  searchButton: {
-    width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
-    borderWidth: 1, borderColor: '#ddd',
+
+  leftTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  searchIcon: { width: 30, height: 30 },
+
+  logoImage: {
+    width: 200,
+    height: 60,
+    marginLeft: 60,
+    marginRight: 12,
+  },
+
+  tempCity: {
+    fontSize: 16,
+    color: '#f46004',
+    marginTop: '6%',
+  },
+
+  rightTop: {
+    justifyContent: 'center',
+  },
+
+  time: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+  },
+
+  twoColumn: {
+    flexDirection: 'row',
+    padding: 12,
+    flex: 1,
+  },
+
+  leftNav: {
+    width: 72,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 0,
+  },
+
   iconButton: {
-    width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 8,
-    borderWidth: 2, borderColor: '#ddd',
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 0,
   },
-  // స్పష్టంగా కనిపించే ఫోకస్ ఎఫెక్ట్
-  focusedIconButton: {
-    backgroundColor: '#000000',   // నలుపు నేపథ్యం
-    borderColor: '#FFD700',      // బంగారు అంచు
-    borderWidth: 6,
-    transform: [{ scale: 1.15 }],
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.9,
-    shadowRadius: 15,
-    elevation: 15,
+
+ focusedIconButton: {
+   backgroundColor: '#F15A24',
+   borderRadius: 18,
+
+   borderWidth: 4,
+   borderColor: '#7FE7FF',
+
+   transform: [{ scale: 1.08 }],
+ },
+
+  iconImage: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
   },
-  iconImage: { width: 35, height: 35, resizeMode: 'contain' },
-  rightContent: { flex: 1, marginLeft: 4 },
-  adsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+
+  watchNowButton: {
+      position: 'absolute',
+      left: 24,
+      bottom: 18,
+      backgroundColor: '#FF5A1F',
+      paddingHorizontal: 22,
+      paddingVertical: 10,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: '#ffffff',
+      zIndex: 10,
+      elevation: 10,
+  },
+
+  focusedWatchNowButton: {
+      backgroundColor: '#00AEEF',
+      borderColor: '#ffffff',
+      borderWidth: 3,
+      transform: [{ scale: 1.08 }],
+  },
+
+  watchNowText: {
+      color: '#ffffff',
+      fontSize: 14,
+      fontWeight: '800',
+  },
+
+  rightContent: {
+    flex: 1,
+    marginLeft: 4,
+  },
+
+  adsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+
   adItem: {
     width: '49%',
     height: 280,
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderRadius: 12,
+    backgroundColor: 'transparent',
+    borderRadius: 18,
     overflow: 'hidden',
-    borderColor: '#FF0000',
+
+    elevation: 4,
   },
-  redBorder: { borderColor: '#FF0000' },
-  focusedAd: {
-    borderColor: '#FFD700',
-    borderWidth: 6,
-    backgroundColor: '#000000',
-    transform: [{ scale: 1.02 }],
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 12,
-  },
+
   adImage: {
     width: '100%',
-    height: '104%',
-    resizeMode: 'cover',
+    height: '100%',
   },
+
   quickAppsRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    marginTop: 2,
+    marginTop: 8,
   },
+
+    bottomImageCard: {
+      height: 140,
+      borderRadius: 16,
+      overflow: 'hidden',
+      backgroundColor: 'transparent',
+    },
+
+    bottomImage: {
+      width: '100%',
+      height: '100%',
+    },
+
+    quickAppsCard: {
+      height: 126,
+      borderRadius: 18,
+      backgroundColor: '#F5F7FA',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 18,
+    },
+    appItemNoBorder: {
+      width: 82,
+      height: 82,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'transparent',
+      borderRadius: 14,
+    },
+
+    appNameNoBorder: {
+      fontSize: 10,
+      color: '#5C6470',
+      marginTop: 6,
+      textAlign: 'center',
+    },
+
   borderedColumnRed: {
-    borderWidth: 2,
-    borderColor: '#FF0000',
-    borderRadius: 8,
-    marginHorizontal: 2,
-    padding: 0,
+    borderRadius: 16,
+    marginHorizontal: 4,
     height: 140,
-    justifyContent: 'center',
-    alignItems: 'center',
     overflow: 'hidden',
   },
-  leftColumn: { flex: 0.8 },
-  middleColumn: { flex: 2.0 },
-  rightColumn: { flex: 0.8 },
-  fullSizeImage: {
-    width: '102%',
-    height: '100%',
-    resizeMode: 'cover',
+
+  leftColumn: {
+    flex: 0.8,
+    marginRight: 6,
   },
+
+  middleColumn: {
+    flex: 2,
+    marginHorizontal: 6,
+  },
+
+  rightColumn: {
+    flex: 0.8,
+    marginLeft: 6,
+  },
+
+  fullSizeImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   quickAppsTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2c3e50',
     textAlign: 'center',
-    marginVertical: 4,
+    marginBottom: 10,
   },
+
   appsRowNoBorder: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 4,
-  },
-  appItemNoBorder: {
-    flex: 1,
+    justifyContent: 'space-evenly',
     alignItems: 'center',
-    paddingVertical: 2,
-    marginHorizontal: 2,
-    backgroundColor: 'transparent',
-    borderRadius: 8,
+    width: '100%',
+    paddingHorizontal: 8,
   },
+
   focusedAppNoBorder: {
-    backgroundColor: '#000000',
-    borderWidth: 6,
-    borderColor: '#FFD700',
-    transform: [{ scale: 1.15 }],
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.9,
-    shadowRadius: 15,
-    elevation: 15,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 3,
+    borderColor: '#F15A24',
+    transform: [{ scale: 1.08 }],
   },
+
   appIconNoBorder: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#f1f2f6',
   },
-  appNameNoBorder: {
-    fontSize: 10,
-    color: '#34495e',
-    marginTop: 2,
-    textAlign: 'center',
+
+  focusedAppName: {
+    color: '#F15A24',
+    fontWeight: '800',
   },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   modalView: {
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 35,
     width: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
     elevation: 5,
   },
+
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
   },
+
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -469,10 +657,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingHorizontal: 10,
   },
+
   settingLabel: {
     fontSize: 18,
     color: '#333',
   },
+
   closeButton: {
     backgroundColor: '#3498db',
     borderRadius: 10,
@@ -480,14 +670,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: 'center',
   },
+
   focusedCloseButton: {
-    backgroundColor: '#000000',
-    borderWidth: 4,
-    borderColor: '#FFD700',
+    backgroundColor: '#FFF200',
+    borderWidth: 5,
+    borderColor: '#FF0000',
     transform: [{ scale: 1.05 }],
   },
+
   closeButtonText: {
-    color: 'white',
+    color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
   },
